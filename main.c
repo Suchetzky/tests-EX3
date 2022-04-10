@@ -23,7 +23,7 @@ typedef struct NextNodeCounter {
 
 typedef struct MarkovNode {
     char *data;
-    NextNodeCounter **counter_list;
+    NextNodeCounter *counter_list;
     int next_word_num;
 } MarkovNode;
 
@@ -61,7 +61,7 @@ int number_of_nexts(MarkovNode *state_struct_ptr) {
     int result = 0;
     if (state_struct_ptr->counter_list != NULL) {
         for (int i = 0; i < state_struct_ptr->next_word_num; i++) {
-            result += state_struct_ptr->counter_list[i]->frequency;
+            result += state_struct_ptr->counter_list[i].frequency;
         }
         return result;
     }
@@ -77,9 +77,9 @@ MarkovNode *get_next_random_node(MarkovNode *state_struct_ptr) {
     int random_next_word = get_random_number(max_number);
     int sum_until = 0;
     for (int i = 0; state_struct_ptr->next_word_num > i; i++) {
-        sum_until += state_struct_ptr->counter_list[i]->frequency;
+        sum_until += state_struct_ptr->counter_list[i].frequency;
         if (sum_until > random_next_word) {
-            return state_struct_ptr->counter_list[i]->markov_node;
+            return state_struct_ptr->counter_list[i].markov_node;
         }
     }
 }
@@ -114,11 +114,10 @@ void free_markov_chain(MarkovChain **ptr_chain) {
     for (int i = 0; i < ptr_chain[0]->database->size; i++)
     {
         Node *save_ptr_normal_node = ptr_chain[0]->database->first->next;
-        printf("%d",ptr_chain[0]->database->first->data->next_word_num);
-        for (int x=0; x<ptr_chain[0]->database->first->data->next_word_num;x++)
-        {
-            free(ptr_chain[0]->database->first->data->counter_list[x]);
-        }
+//        for (int x=0; x<ptr_chain[0]->database->first->data->next_word_num;x++)
+//        {
+//            free(ptr_chain[0]->database->first->data->counter_list[x]);
+//        }
         free(ptr_chain[0]->database->first->data->counter_list);
         free(ptr_chain[0]->database->first->data);
         free(ptr_chain[0]->database->first);
@@ -131,27 +130,21 @@ void free_markov_chain(MarkovChain **ptr_chain) {
 bool add_node_to_counter_list(MarkovNode *first_node, MarkovNode *second_node) {
     if (first_node->counter_list != NULL) {
         for (int i = 0; i < first_node->next_word_num; i++) {
-            if (second_node == first_node->counter_list[i]->markov_node) {
-                first_node->counter_list[i]->frequency++;
+            if (second_node == first_node->counter_list[i].markov_node) {
+                first_node->counter_list[i].frequency++;
                 return true;
             }
         }
     }
-    first_node->counter_list = (NextNodeCounter **) realloc(first_node->counter_list,
+    first_node->counter_list = (NextNodeCounter *) realloc(first_node->counter_list,
                                                             (first_node->next_word_num + 1) * sizeof
-                                                                    (void *));
+                                                                    (NextNodeCounter));
     if (first_node->counter_list == NULL) {
         return false;
     }
     first_node->next_word_num++;
-    first_node->counter_list[first_node->next_word_num - 1] =
-            (NextNodeCounter *) malloc(sizeof(NextNodeCounter));
-    if (first_node->counter_list == NULL) {
-        return false;
-    }
-    first_node->counter_list[first_node->next_word_num - 1]->markov_node
-            = second_node;
-    first_node->counter_list[first_node->next_word_num - 1]->frequency = 1;
+    first_node->counter_list[first_node->next_word_num - 1].markov_node= second_node;
+    first_node->counter_list[first_node->next_word_num - 1].frequency = 1;
     return true;
 }
 
@@ -167,15 +160,13 @@ int main() {
     B->next_word_num = 1;
     A->data = ".aaa.";
     B->data = ".bbb";
-    A->counter_list = (NextNodeCounter **) malloc(sizeof(void *));
-    B->counter_list = (NextNodeCounter **) malloc(sizeof(void *));
+    A->counter_list = (NextNodeCounter *) malloc(sizeof(NextNodeCounter));
+    B->counter_list = (NextNodeCounter *) malloc(sizeof(NextNodeCounter));
 
-    A->counter_list[0] = (NextNodeCounter *) malloc(sizeof(NextNodeCounter));
-    A->counter_list[0]->markov_node = B;
-    A->counter_list[0]->frequency = 1;
-    B->counter_list[0] = (NextNodeCounter *) malloc(sizeof(NextNodeCounter));
-    B->counter_list[0]->markov_node = A;
-    B->counter_list[0]->frequency = 1;
+    A->counter_list[0].markov_node = B;
+    A->counter_list[0].frequency = 1;
+    B->counter_list[0].markov_node = A;
+    B->counter_list[0].frequency = 1;
 
     Node *a_node;
     a_node = (Node *) malloc(sizeof(Node));
@@ -199,8 +190,12 @@ int main() {
      //third function try
     generate_random_sequence(MAIN, random_first_node, 3);
     //Fifth function try
-    //add_node_to_counter_list (B, B);
-     //forth
+    add_node_to_counter_list (B, B);
+//    add_node_to_counter_list (B, B);
+//    add_node_to_counter_list (A, B);
+//    add_node_to_counter_list (A, A);
+
+    //forth function try
 
     free_markov_chain(&MAIN);
 }
